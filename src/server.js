@@ -26,7 +26,7 @@ app.use(limiter);
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: "http://localhost:5173", // Set to true if ita-try mo sa network for host (cp), ok ok?
     credentials: true,
   })
 );

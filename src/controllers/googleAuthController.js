@@ -12,10 +12,10 @@ export const googleCallback = async (req, res) => {
 
     const redirectUrl =
       user._platform === "mobile"
-        ? process.env.MOBILE_REDIRECT_URL
+        ? `${process.env.MOBILE_REDIRECT_URL}?token=${token}`
         : process.env.WEB_REDIRECT_URL;
 
-    return res.redirect(`${redirectUrl}?token=${token}`);
+    return res.redirect(redirectUrl);
   } catch (error) {
     console.error("Google callback error: ", error);
     return res.status(500).json({ message: "Server error" });

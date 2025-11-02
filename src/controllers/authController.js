@@ -32,7 +32,7 @@ export const signUp = async (req, res) => {
     setTokenCookie(res, token);
 
     res.status(201).json({
-      message: "Registered successful",
+      message: "Registered successfully",
       user: {
         email: newUser.email,
         role: newUser.role,
@@ -58,7 +58,7 @@ export const login = async (req, res) => {
     }
 
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json("Invalid credentials");
+    if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(400).json({ message: "Invalid password." });
