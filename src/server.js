@@ -7,6 +7,9 @@ import rateLimit from "express-rate-limit";
 import cors from "cors";
 import connectDB from "./config/db.js";
 import authRoutes from "./routes/authRoutes.js";
+import faqRoutes from "./routes/faqRoutes.js";
+import serviceRoutes from "./routes/serviceRoutes.js";
+import reservationRoutes from "./routes/reservationRoutes.js";
 
 dotenv.config();
 
@@ -26,12 +29,15 @@ app.use(limiter);
 
 app.use(
   cors({
-    origin: "http://localhost:5173", // Set to true if ita-try mo sa network for host (cp), ok ok?
+    origin: "http://localhost:5173",
     credentials: true,
   })
 );
 
 app.use("/api/auth", authRoutes);
+app.use("/api/faq", faqRoutes);
+app.use("/api/services", serviceRoutes);
+app.use("/api/reservations", reservationRoutes);
 
 const PORT = process.env.PORT;
 
