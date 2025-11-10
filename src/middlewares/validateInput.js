@@ -92,3 +92,26 @@ export const validateReservationInput = (req, res, next) => {
 
   next();
 };
+
+export const validateFeedbackInput = (req, res, next) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required().messages({
+      "string.empty": "Email is required.",
+      "string.email": "Please enter a valid email address.",
+    }),
+    message: Joi.string(),
+    star: Joi.number().valid(1, 2, 3, 4, 5).required().messages({
+      "any.only": "Star must be 1, 2, 3, 4, or 5.",
+      "number.empty": "Please enter your star review.",
+      "number.min": "Please enter at least one star.",
+      "number.max": "Please enter a star between 1-5 only.",
+      "any.required": "Star rating is required.",
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+
+  if (error) return res.status(400).json({ message: error.details[0].message });
+
+  next();
+};
