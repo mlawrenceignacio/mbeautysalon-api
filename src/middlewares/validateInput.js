@@ -3,11 +3,11 @@ import Joi from "joi";
 export const validateAuthInput = (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string().email({ tlds: false }).required().messages({
-      "string.empty": "Email required.",
+      "string.empty": "Email is required.",
       "string.email": "Please enter a valid email address",
     }),
     password: Joi.string().min(8).required().messages({
-      "string.empty": "Password required.",
+      "string.empty": "Password is required.",
       "string.min": "Password must be at least 8 characters.",
     }),
   });
@@ -99,7 +99,7 @@ export const validateFeedbackInput = (req, res, next) => {
       "string.empty": "Email is required.",
       "string.email": "Please enter a valid email address.",
     }),
-    message: Joi.string(),
+    message: Joi.string().allow(""),
     star: Joi.number().valid(1, 2, 3, 4, 5).required().messages({
       "any.only": "Star must be 1, 2, 3, 4, or 5.",
       "number.empty": "Please enter your star review.",

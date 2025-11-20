@@ -2,10 +2,12 @@ import User from "../models/User.js";
 import { generateToken } from "../utils/generateToken.js";
 
 export const setTokenCookie = (res, token) => {
+  const isProd = process.env.NODE_ENV === "production";
+
   res.cookie("token", token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: isProd,
+    sameSite: isProd ? "none" : "lax",
     maxAge: 1000 * 60 * 60 * 24,
   });
 };

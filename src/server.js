@@ -11,6 +11,7 @@ import faqRoutes from "./routes/faqRoutes.js";
 import serviceRoutes from "./routes/serviceRoutes.js";
 import reservationRoutes from "./routes/reservationRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
 
@@ -30,7 +31,11 @@ app.use(limiter);
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "http://192.168.100.32:5173",
+      "http://10.144.162.247:5173",
+    ],
     credentials: true,
   })
 );
@@ -40,6 +45,7 @@ app.use("/api/faq", faqRoutes);
 app.use("/api/services", serviceRoutes);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/feedbacks", feedbackRoutes);
+app.use("/api/user", userRoutes);
 
 const PORT = process.env.PORT;
 

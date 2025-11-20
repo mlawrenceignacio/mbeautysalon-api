@@ -9,6 +9,7 @@ const feedbackSchema = new mongoose.Schema(
     },
     message: {
       type: String,
+      default: "",
     },
     star: {
       type: Number,
