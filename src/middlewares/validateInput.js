@@ -63,9 +63,6 @@ export const validateReservationInput = (req, res, next) => {
     time: Joi.string().required().messages({
       "string.empty": "Time field is required.",
     }),
-    label: Joi.string().required().messages({
-      "string.empty": "Label field is required.",
-    }),
     clientName: Joi.string().required().messages({
       "string.empty": "Client name is required.",
     }),
@@ -80,10 +77,11 @@ export const validateReservationInput = (req, res, next) => {
     address: Joi.string().required().messages({
       "string.empty": "Address field is required.",
     }),
-    note: Joi.string(),
+    note: Joi.string().allow(""),
     service: Joi.string().required().messages({
       "string.empty": "Service field is required.",
     }),
+    status: Joi.string().allow(""),
   });
 
   const { error } = schema.validate(req.body);

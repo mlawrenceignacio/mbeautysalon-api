@@ -20,12 +20,12 @@ export const addReservation = async (req, res) => {
       date,
       time,
       clientName,
-      label,
       email,
       phone,
       address,
       note,
       service,
+      status,
     } = req.body;
 
     const newReservation = await Reservation.create({
@@ -35,23 +35,14 @@ export const addReservation = async (req, res) => {
       address,
       phone,
       email,
-      label,
-      note,
+      note: note ? note : "None",
       service,
+      status: status ? status : "Pending",
     });
 
     return res.status(201).json({
       message: "Reservation added!",
-      reservation: {
-        date: newReservation.date,
-        time: newReservation.time,
-        clientName: newReservation.clientName,
-        phone: newReservation.phone,
-        email: newReservation.email,
-        label: newReservation.label,
-        note: newReservation.note,
-        service: newReservation.service,
-      },
+      newReservation,
     });
   } catch (error) {
     console.error(error.message);
@@ -68,9 +59,9 @@ export const editReservation = async (req, res) => {
       address,
       phone,
       email,
-      label,
       note,
       service,
+      status,
     } = req.body;
     const { id } = req.params;
 
@@ -85,24 +76,14 @@ export const editReservation = async (req, res) => {
       address,
       phone,
       email,
-      label,
-      note,
+      note: note ? note : "None",
       service,
+      status: status ? status : "Pending",
     });
 
     return res.status(200).json({
       message: "Reservation edited succesfully!",
-      reservation: {
-        date: newReservation.date,
-        time: newReservation.time,
-        clientName: newReservation.clientName,
-        address: newReservation.address,
-        phone: newReservation.phone,
-        email: newReservation.email,
-        label: newReservation.label,
-        note: newReservation.note,
-        service: newReservation.service,
-      },
+      newReservation,
     });
   } catch (error) {
     console.error(error.message);

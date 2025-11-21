@@ -31,10 +31,6 @@ const reservationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    label: {
-      type: String,
-      required: true,
-    },
     note: {
       type: String,
       default: "None",
@@ -42,6 +38,10 @@ const reservationSchema = new mongoose.Schema(
     service: {
       type: String,
       required: true,
+    },
+    status: {
+      type: String,
+      default: "Pending",
     },
   },
   { timestamps: true }
