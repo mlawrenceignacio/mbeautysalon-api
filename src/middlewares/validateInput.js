@@ -113,3 +113,22 @@ export const validateFeedbackInput = (req, res, next) => {
 
   next();
 };
+
+export const validateUserInput = (req, res, next) => {
+  const schema = Joi.object({
+    username: Joi.string().min(8).required().messages({
+      "string.empty": "Username required.",
+      "string.min": "Please enter a minimum of 8 characters.",
+    }),
+    email: Joi.string().email().required().messages({
+      "string.empty": "Email is required.",
+      "string.min": "Please enter a minimum of 8 characters",
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+
+  if (error) return res.status(400).json({ message: error.details[0].message });
+
+  next();
+};
