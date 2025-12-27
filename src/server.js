@@ -17,6 +17,8 @@ dotenv.config();
 
 const app = express();
 
+app.set("trust proxy", 1);
+
 app.use(helmet());
 app.use(cookieParser());
 app.use(express.json());
@@ -31,7 +33,7 @@ app.use(limiter);
 
 app.use(
   cors({
-    origin: ["http://localhost:5173", "http://192.168.100.32:5173"],
+    origin: true,
     credentials: true,
   })
 );
@@ -47,7 +49,7 @@ const PORT = process.env.PORT;
 
 connectDB()
   .then(() => {
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(`Server started at port ${PORT}...\n`);
     });
   })

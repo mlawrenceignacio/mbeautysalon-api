@@ -6,8 +6,8 @@ export const setTokenCookie = (res, token) => {
 
   res.cookie("token", token, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? "none" : "lax",
+    secure: true, //isProd - for now, on DEPLOYMENT, change this to isProd.
+    sameSite: "none", //for now, on DEPLOYMENT, change this to: "isProd ? "none" : "lax" "
     maxAge: 1000 * 60 * 60 * 24,
   });
 };
@@ -35,6 +35,7 @@ export const signUp = async (req, res) => {
 
     res.status(201).json({
       message: "Registered successfully",
+      token,
       user: {
         email: newUser.email,
         role: newUser.role,
@@ -76,6 +77,7 @@ export const login = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
+      token,
       user: {
         email: user.email,
         role: user.role,
