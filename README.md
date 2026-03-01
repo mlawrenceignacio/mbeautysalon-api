@@ -1,14 +1,32 @@
-# MBEAUTYQUEEN BROWS & LASHES BACKEND API
+# MBeautyQueen Brows & Lashes — Backend API
 
-## Currently in Development
-- This is the Backend API for our IT 3 - System Analysis and Design project: the MBeautyQueen Brows and Lashes Salon Management System, which includes both a website and a mobile application. It serves as our mini capstone project for our 2nd Year BSIT course.
+## Overview
+This repository contains the backend API for the **MBeautyQueen Brows & Lashes Salon Management System**, developed as a mini capstone project for:
 
-## Technologies, Third-Party Services, and Tools
-- Node.js & Express.js
-- MongoDB Atlas
-- Google OAuth
-- Ongoing...
+- **IT 3 – System Analysis and Design**
+- **IT 4 – Software Engineering**
 
-## Features:
-- User Authentication
-- More features coming soon...
+The system supports both a **web application** and a **mobile application**, providing centralized data management for salon operations.
+
+## Deployment
+The API is deployed using **Render** for cloud hosting and availability.
+
+## Tech Stack
+The backend is built using modern web technologies:
+
+- **Node.js** & **Express.js** — REST API and server framework  
+- **MongoDB Atlas** — Cloud database storage  
+- **Google OAuth 2.0** — Third-party authentication  
+- **Socket.IO** — Real-time messaging and notifications  
+
+## Purpose
+This API serves as the core service layer of the system, handling:
+
+- User authentication and authorization  
+- Appointment and reservation management  
+- Salon services and scheduling data  
+- Customer and staff records
+- Salon data
+- Real-time messaging
+
+It acts as the central data provider for both the web and mobile client applications.
