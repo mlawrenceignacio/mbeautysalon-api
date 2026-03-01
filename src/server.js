@@ -22,10 +22,10 @@ import { Server } from "socket.io";
 
 dotenv.config();
 
-const allowedOrigins = (process.env.CORS_ORIGINS || "")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+const allowedOrigins = [
+  process.env.FRONTEND_WEB_URL,
+  "http://localhost:5173",
+].filter(Boolean);
 
 const app = express();
 const httpServer = createServer(app);
@@ -33,6 +33,7 @@ const httpServer = createServer(app);
 const io = new Server(httpServer, {
   cors: {
     origin: allowedOrigins,
+    credentials: true,
   },
 });
 
