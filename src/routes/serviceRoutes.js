@@ -13,6 +13,6 @@ const router = express.Router();
 router.get("/", getServices);
 router.post("/", protect, adminOnly, validateServiceInput, addService);
 router.put("/:id", protect, adminOnly, validateServiceInput, editService);
-router.delete("/:id", protect, adminOnly, validateServiceInput, deleteService);
+router.delete("/:id", protect, adminOnly, deleteService);
 
 export default router;

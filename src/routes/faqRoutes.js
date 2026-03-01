@@ -1,6 +1,6 @@
 import express from "express";
 import {
-  getFaq,
+  getFaqs,
   addFaq,
   editFaq,
   deleteFaq,
@@ -10,9 +10,10 @@ import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", protect, getFaq);
+router.get("/", getFaqs);
+
 router.post("/", protect, adminOnly, validateFaqInput, addFaq);
 router.put("/:id", protect, adminOnly, validateFaqInput, editFaq);
-router.delete("/:id", protect, adminOnly, validateFaqInput, deleteFaq);
+router.delete("/:id", protect, adminOnly, deleteFaq);
 
 export default router;

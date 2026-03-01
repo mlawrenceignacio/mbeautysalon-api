@@ -132,3 +132,68 @@ export const validateUserInput = (req, res, next) => {
 
   next();
 };
+
+export const validateContactInput = (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required().messages({
+      "string.empty": "Contact name is required.",
+    }),
+
+    val: Joi.string().required().messages({
+      "string.empty": "Contact value is required.",
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+
+  if (error) return res.status(400).json({ message: error.details[0].message });
+
+  next();
+};
+
+export const validatePromotionInput = (req, res, next) => {
+  const schema = Joi.object({
+    name: Joi.string().required().messages({
+      "string.empty": "Promotion name is required.",
+    }),
+    description: Joi.string().trim().required().messages({
+      "string.empty": "Promotion description is required.",
+    }),
+    category: Joi.string().required().messages({
+      "string.empty": "Promotion category is required.",
+    }),
+    expiration: Joi.date().greater("now").required().messages({
+      "date.base": "Expiration must be a valid date.",
+      "date.greater": "Expiration must be a future date.",
+      "any.required": "Promotion expiration is required.",
+    }),
+    status: Joi.string().valid("Active", "Expired").optional(),
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error)
+    return res.status(400).json({ message: error?.details[0].message });
+
+  next();
+};
+
+export const validateAdminActivityInput = (req, res, next) => {
+  const schema = Joi.object({
+    activityName: Joi.string().required().messages({
+      "string.empty": "Activity name required.",
+    }),
+    adminUsername: Joi.string().required().messages({
+      "string.empty": "Admin Username required.",
+    }),
+    adminEmail: Joi.string().email().required().messages({
+      "string.empty": "Admin Email required.",
+      "string.email": "Enter a valid email address.",
+    }),
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error)
+    return res.status(400).json({ message: error?.details[0].message });
+
+  next();
+};

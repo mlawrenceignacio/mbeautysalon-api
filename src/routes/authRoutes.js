@@ -12,20 +12,21 @@ const router = express.Router();
 
 router.post("/signup", validateAuthInput, signUp);
 router.post("/login", validateAuthInput, login);
-router.post("/logout", protect, logout);
+router.post("/logout", logout);
 
 router.get("/google", oauthLimiter, (req, res, next) => {
   const platform = req.query.platform;
   passport.authenticate("google", {
     scope: ["profile", "email"],
     state: platform,
+    prompt: "select_account",
   })(req, res, next);
 });
 
 router.get(
   "/google/callback",
   passport.authenticate("google", { session: false }),
-  googleCallback
+  googleCallback,
 );
 
 export default router;

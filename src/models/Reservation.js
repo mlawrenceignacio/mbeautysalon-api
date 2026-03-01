@@ -4,8 +4,8 @@ import User from "./User.js";
 const reservationSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Types.ObjectId,
-      ref: User,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     date: {
       type: Date,
@@ -41,7 +41,23 @@ const reservationSchema = new mongoose.Schema(
     },
     status: {
       type: String,
+      enum: [
+        "Pending",
+        "EmailSent",
+        "UserConfirmed",
+        "Confirmed",
+        "Declined",
+        "Cancelled",
+        "Done",
+      ],
       default: "Pending",
+    },
+    confirmationToken: {
+      type: String,
+    },
+    decisionReason: {
+      type: String,
+      trim: true,
     },
   },
   { timestamps: true }

@@ -1,6 +1,6 @@
 import Faq from "../models/FAQ.js";
 
-export const getFaq = async (req, res) => {
+export const getFaqs = async (req, res) => {
   try {
     const faq = await Faq.find();
     if (!faq) return res.status(404).json({ message: "FAQ not found." });
@@ -17,6 +17,11 @@ export const getFaq = async (req, res) => {
 export const addFaq = async (req, res) => {
   try {
     const { question, answer } = req.body;
+
+    const existingFaq = await Faq.findOne({ question });
+    if (existingFaq) {
+      return res.status(400).json({ message: "This question already exists." });
+    }
 
     const newFaq = await Faq.create({
       question,
@@ -44,10 +49,23 @@ export const editFaq = async (req, res) => {
     const faq = await Faq.findById(id);
     if (!faq) return res.status(404).json({ message: "FAQ not found." });
 
-    const newFaq = await Faq.findByIdAndUpdate(id, {
+    const existingFaq = await Faq.findOne({
       question,
-      answer,
+      _id: { $ne: id },
     });
+
+    if (existingFaq) {
+      return res.status(400).json({ message: "This question already exists." });
+    }
+
+    const newFaq = await Faq.findByIdAndUpdate(
+      id,
+      {
+        question,
+        answer,
+      },
+      { new: true }
+    );
 
     return res.status(200).json({
       message: "FAQ edited successfully!",
