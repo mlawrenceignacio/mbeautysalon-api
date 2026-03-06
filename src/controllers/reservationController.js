@@ -75,7 +75,7 @@ export const editReservation = async (req, res) => {
     const updatedReservation = await Reservation.findByIdAndUpdate(
       id,
       { $set: req.body },
-      { new: true, runValidators: true }
+      { new: true, runValidators: true },
     );
 
     if (!updatedReservation) {
@@ -113,39 +113,51 @@ export const deleteReservation = async (req, res) => {
 };
 
 export const sendConfirmationEmail = async (req, res) => {
-  const reservation = await Reservation.findById(req.params.id);
+  try {
+    const reservation = await Reservation.findById(req.params.id);
 
-  if (!reservation)
-    return res.status(404).json({ message: "Reservation not found" });
+    if (!reservation) {
+      return res.status(404).json({ message: "Reservation not found" });
+    }
 
-  if (reservation.status !== "Pending")
-    return res.status(400).json({ message: "Confirmation already sent" });
+    if (reservation.status !== "Pending") {
+      return res.status(400).json({ message: "Confirmation already sent" });
+    }
 
-  const token = crypto.randomBytes(32).toString("hex");
+    const token = crypto.randomBytes(32).toString("hex");
 
-  reservation.confirmationToken = token;
-  reservation.status = "EmailSent";
-  await reservation.save();
+    const backendUrl = process.env.BACKEND_URL?.replace(/\/$/, "");
+    const confirmUrl = `${backendUrl}/api/reservations/confirm/${token}`;
+    const cancelUrl = `${backendUrl}/api/reservations/cancel/${token}`;
 
-  const confirmUrl = `${process.env.BACKEND_URL}/api/reservations/confirm/${token}`;
-  const cancelUrl = `${process.env.BACKEND_URL}/api/reservations/cancel/${token}`;
+    await sendEmail({
+      to: reservation.email,
+      subject: "Confirm Your Reservation",
+      html: `
+        <h2>Reservation Confirmation</h2>
+        <p><b>Name:</b> ${reservation.clientName}</p>
+        <p><b>Service:</b> ${reservation.service}</p>
+        <p><b>Date:</b> ${reservation.date}</p>
+        <p><b>Time:</b> ${reservation.time}</p>
 
-  await sendEmail({
-    to: reservation.email,
-    subject: "Confirm Your Reservation",
-    html: `
-    <h2>Reservation Confirmation</h2>
-      <p><b>Name:</b> ${reservation.clientName}</p>
-      <p><b>Service:</b> ${reservation.service}</p>
-      <p><b>Date:</b> ${reservation.date}</p>
-      <p><b>Time:</b> ${reservation.time}</p>
+        <a href="${confirmUrl}" style="padding:10px 15px;background:#790808;color:white;border-radius:5px;text-decoration:none;">Confirm</a>
+        <br/><br/>
+        <a href="${cancelUrl}" style="color:red;">Cancel Reservation</a>
+      `,
+    });
 
-      <a href="${confirmUrl}" style="padding:10px 15px;background:#790808;color:white;border-radius:5px;text-decoration:none;">Confirm</a>
-      <br/><br/>
-      <a href="${cancelUrl}" style="color:red;">Cancel Reservation</a>`,
-  });
+    reservation.confirmationToken = token;
+    reservation.status = "EmailSent";
+    await reservation.save();
 
-  res.json({ message: "Confirmation email sent" });
+    return res.json({ message: "Confirmation email sent" });
+  } catch (error) {
+    console.error("sendConfirmationEmail error:", error);
+    return res.status(500).json({
+      message: "Failed to send confirmation email",
+      error: error.message,
+    });
+  }
 };
 
 export const confirmReservationFromEmail = async (req, res) => {
