@@ -8,22 +8,14 @@ if (!emailUser || !emailPass) {
 }
 
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: emailUser,
     pass: emailPass,
   },
 });
-
-let transporterVerified = false;
-
-const ensureTransporterReady = async () => {
-  if (transporterVerified) return;
-
-  await transporter.verify();
-  transporterVerified = true;
-  console.log("SMTP connection verified");
-};
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
@@ -37,8 +29,6 @@ export const sendEmail = async ({ to, subject, html }) => {
       );
     }
 
-    await ensureTransporterReady();
-
     const info = await transporter.sendMail({
       from: `"MBeautyQueen" <${emailUser}>`,
       to,
@@ -46,10 +36,22 @@ export const sendEmail = async ({ to, subject, html }) => {
       html,
     });
 
-    console.log("Email sent:", info.response);
+    console.log("Email sent:", {
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+      response: info.response,
+    });
+
     return info;
   } catch (error) {
-    console.error("sendEmail error:", error);
+    console.error("sendEmail error details:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+    });
     throw error;
   }
 };

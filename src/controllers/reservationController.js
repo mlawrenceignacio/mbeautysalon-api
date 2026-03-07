@@ -133,20 +133,23 @@ export const sendConfirmationEmail = async (req, res) => {
       return res.status(404).json({ message: "Reservation not found." });
     }
 
-    const allowedStatuses = ["Pending", "EmailSent"];
-    if (!allowedStatuses.includes(reservation.status)) {
+    if (!reservation.email) {
+      return res.status(400).json({ message: "Reservation email is missing." });
+    }
+
+    if (!["Pending", "EmailSent"].includes(reservation.status)) {
       return res.status(400).json({
-        message: `Cannot send confirmation while reservation is "${reservation.status}".`,
+        message: `Cannot send confirmation for reservation with status "${reservation.status}".`,
       });
     }
 
-    if (!reservation.email) {
-      return res
-        .status(400)
-        .json({ message: "Reservation has no email address." });
+    const backendUrl = process.env.BACKEND_URL?.replace(/\/$/, "");
+    if (!backendUrl) {
+      return res.status(500).json({
+        message: "BACKEND_URL is not configured on the server.",
+      });
     }
 
-    const backendUrl = getBaseUrl();
     const token = crypto.randomBytes(32).toString("hex");
 
     reservation.confirmationToken = token;
@@ -161,7 +164,7 @@ export const sendConfirmationEmail = async (req, res) => {
       html: `
         <h2>Reservation Confirmation</h2>
         <p><b>Name:</b> ${reservation.clientName}</p>
-        <p><b>Service:</b> ${formatService(reservation.service)}</p>
+        <p><b>Service:</b> ${reservation.service}</p>
         <p><b>Date:</b> ${reservation.date}</p>
         <p><b>Time:</b> ${reservation.time}</p>
 
@@ -174,7 +177,7 @@ export const sendConfirmationEmail = async (req, res) => {
           Confirm
         </a>
 
-        <br/><br/>
+        <br /><br />
 
         <a href="${cancelUrl}" style="color:red;">
           Cancel Reservation
@@ -185,9 +188,18 @@ export const sendConfirmationEmail = async (req, res) => {
     reservation.status = "EmailSent";
     await reservation.save();
 
-    return res.status(200).json({ message: "Confirmation email sent." });
+    return res.status(200).json({
+      message: "Confirmation email sent successfully.",
+    });
   } catch (error) {
-    console.error("sendConfirmationEmail error:", error);
+    console.error("sendConfirmationEmail error:", {
+      message: error.message,
+      code: error.code,
+      command: error.command,
+      response: error.response,
+      responseCode: error.responseCode,
+    });
+
     return res.status(500).json({
       message: "Failed to send confirmation email.",
       error: error.message,
