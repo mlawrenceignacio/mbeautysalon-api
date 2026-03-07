@@ -2,15 +2,27 @@ import Reservation from "../models/Reservation.js";
 import crypto from "crypto";
 import { sendEmail } from "../utils/sendEmail.js";
 
+const formatService = (service) => {
+  if (Array.isArray(service)) return service.join(", ");
+  if (service == null) return "N/A";
+  return String(service);
+};
+
+const getBaseUrl = () => {
+  const raw = process.env.BACKEND_URL;
+  if (!raw) {
+    throw new Error("BACKEND_URL is not configured.");
+  }
+  return raw.replace(/\/$/, "");
+};
+
 export const getUserReservation = async (req, res) => {
   try {
     const reservations = await Reservation.find({ userId: req.user._id });
-    if (!reservations)
-      return res.status(404).json({ message: "No reservation found." });
 
     return res.status(200).json({ reservations });
   } catch (error) {
-    console.log(error.message);
+    console.error("getUserReservation error:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
@@ -21,7 +33,7 @@ export const getReservations = async (req, res) => {
 
     return res.status(200).json({ reservations });
   } catch (error) {
-    console.error(error.message);
+    console.error("getReservations error:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
@@ -58,7 +70,7 @@ export const addReservation = async (req, res) => {
       newReservation,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("addReservation error:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
@@ -91,7 +103,7 @@ export const editReservation = async (req, res) => {
       updatedReservation,
     });
   } catch (error) {
-    console.error(error.message);
+    console.error("editReservation error:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
@@ -108,7 +120,7 @@ export const deleteReservation = async (req, res) => {
 
     return res.status(200).json({ message: "Reservation deleted." });
   } catch (error) {
-    console.error(error.message);
+    console.error("deleteReservation error:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
@@ -118,7 +130,7 @@ export const sendConfirmationEmail = async (req, res) => {
     const reservation = await Reservation.findById(req.params.id);
 
     if (!reservation) {
-      return res.status(404).json({ message: "Reservation not found" });
+      return res.status(404).json({ message: "Reservation not found." });
     }
 
     const allowedStatuses = ["Pending", "EmailSent"];
@@ -134,12 +146,12 @@ export const sendConfirmationEmail = async (req, res) => {
         .json({ message: "Reservation has no email address." });
     }
 
+    const backendUrl = getBaseUrl();
     const token = crypto.randomBytes(32).toString("hex");
 
     reservation.confirmationToken = token;
     await reservation.save();
 
-    const backendUrl = process.env.BACKEND_URL?.replace(/\/$/, "");
     const confirmUrl = `${backendUrl}/api/reservations/confirm/${token}`;
     const cancelUrl = `${backendUrl}/api/reservations/cancel/${token}`;
 
@@ -149,59 +161,82 @@ export const sendConfirmationEmail = async (req, res) => {
       html: `
         <h2>Reservation Confirmation</h2>
         <p><b>Name:</b> ${reservation.clientName}</p>
-        <p><b>Service:</b> ${reservation.service}</p>
+        <p><b>Service:</b> ${formatService(reservation.service)}</p>
         <p><b>Date:</b> ${reservation.date}</p>
         <p><b>Time:</b> ${reservation.time}</p>
 
-        <a href="${confirmUrl}" style="padding:10px 15px;background:#790808;color:white;border-radius:5px;text-decoration:none;">Confirm</a>
+        <p>Please confirm your reservation by clicking below:</p>
+
+        <a
+          href="${confirmUrl}"
+          style="display:inline-block;padding:10px 15px;background:#790808;color:white;border-radius:5px;text-decoration:none;"
+        >
+          Confirm
+        </a>
+
         <br/><br/>
-        <a href="${cancelUrl}" style="color:red;">Cancel Reservation</a>
+
+        <a href="${cancelUrl}" style="color:red;">
+          Cancel Reservation
+        </a>
       `,
     });
 
-    reservation.confirmationToken = token;
     reservation.status = "EmailSent";
     await reservation.save();
 
-    return res.json({ message: "Confirmation email sent" });
+    return res.status(200).json({ message: "Confirmation email sent." });
   } catch (error) {
     console.error("sendConfirmationEmail error:", error);
     return res.status(500).json({
-      message: "Failed to send confirmation email",
+      message: "Failed to send confirmation email.",
       error: error.message,
     });
   }
 };
 
 export const confirmReservationFromEmail = async (req, res) => {
-  const reservation = await Reservation.findOne({
-    confirmationToken: req.params.token,
-  });
+  try {
+    const reservation = await Reservation.findOne({
+      confirmationToken: req.params.token,
+    });
 
-  if (!reservation) return res.status(400).send("Invalid o expired token.");
+    if (!reservation) {
+      return res.status(400).send("Invalid or expired token.");
+    }
 
-  reservation.status = "UserConfirmed";
-  reservation.confirmationToken = undefined;
-  await reservation.save();
+    reservation.status = "UserConfirmed";
+    reservation.confirmationToken = undefined;
+    await reservation.save();
 
-  res.redirect(`${process.env.FRONTEND_WEB_URL}/confirmed`);
+    return res.redirect(`${process.env.FRONTEND_WEB_URL}/confirmed`);
+  } catch (error) {
+    console.error("confirmReservationFromEmail error:", error);
+    return res.status(500).send("Server Error");
+  }
 };
 
 export const cancelReservationFromEmail = async (req, res) => {
-  const reservation = await Reservation.findOne({
-    confirmationToken: req.params.token,
-  });
+  try {
+    const reservation = await Reservation.findOne({
+      confirmationToken: req.params.token,
+    });
 
-  if (!reservation) return res.status(404).send("Invalid or epxired token.");
+    if (!reservation) {
+      return res.status(404).send("Invalid or expired token.");
+    }
 
-  reservation.status = "Cancelled";
-  reservation.confirmationToken = undefined;
-  await reservation.save();
+    reservation.status = "Cancelled";
+    reservation.confirmationToken = undefined;
+    await reservation.save();
 
-  res.send("Reservation cancelled.");
+    return res.send("Reservation cancelled.");
+  } catch (error) {
+    console.error("cancelReservationFromEmail error:", error);
+    return res.status(500).send("Server Error");
+  }
 };
 
-// src/controllers/reservationController.js
 export const updateReservationStatusWithReason = async (req, res) => {
   try {
     const { id } = req.params;
@@ -228,7 +263,7 @@ export const updateReservationStatusWithReason = async (req, res) => {
     }
 
     reservation.status = status;
-    reservation.decisionReason = reason || undefined;
+    reservation.decisionReason = reason?.trim() || undefined;
 
     await reservation.save();
 
@@ -239,8 +274,11 @@ export const updateReservationStatusWithReason = async (req, res) => {
         html: `
           <h2>Reservation ${status}</h2>
           <p>Hello ${reservation.clientName},</p>
-          <p>Your reservation for <b>${reservation.service}</b> on 
-          <b>${reservation.date}</b> at <b>${reservation.time}</b> has been <b>${status}</b>.</p>
+          <p>
+            Your reservation for <b>${formatService(reservation.service)}</b> on
+            <b>${reservation.date}</b> at <b>${reservation.time}</b> has been
+            <b>${status}</b>.
+          </p>
 
           <p><b>Reason:</b></p>
           <p style="background:#f4f4f4;padding:10px;border-radius:5px;">
@@ -257,7 +295,7 @@ export const updateReservationStatusWithReason = async (req, res) => {
       reservation,
     });
   } catch (error) {
-    console.error(error);
+    console.error("updateReservationStatusWithReason error:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
