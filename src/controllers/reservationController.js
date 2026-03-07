@@ -19,9 +19,6 @@ export const getReservations = async (req, res) => {
   try {
     const reservations = await Reservation.find();
 
-    if (!reservations)
-      return res.status(404).json({ message: "Reservations not found." });
-
     return res.status(200).json({ reservations });
   } catch (error) {
     console.error(error.message);
@@ -51,9 +48,9 @@ export const addReservation = async (req, res) => {
       address,
       phone,
       email,
-      note: note ? note : "None",
+      note: note?.trim() ? note.trim() : "None",
       service,
-      status: status ? status : "Pending",
+      status: status || "Pending",
     });
 
     return res.status(201).json({
@@ -72,13 +69,7 @@ export const editReservation = async (req, res) => {
 
     const reservation = await Reservation.findById(id);
 
-    const updatedReservation = await Reservation.findByIdAndUpdate(
-      id,
-      { $set: req.body },
-      { new: true, runValidators: true },
-    );
-
-    if (!updatedReservation) {
+    if (!reservation) {
       return res.status(404).json({ message: "Reservation not found." });
     }
 
@@ -89,8 +80,14 @@ export const editReservation = async (req, res) => {
       return res.status(400).json({ message: "User has not confirmed yet." });
     }
 
+    const updatedReservation = await Reservation.findByIdAndUpdate(
+      id,
+      { $set: req.body },
+      { new: true, runValidators: true },
+    );
+
     return res.status(200).json({
-      message: "Reservation edited succesfully!",
+      message: "Reservation edited successfully!",
       updatedReservation,
     });
   } catch (error) {
@@ -103,7 +100,11 @@ export const deleteReservation = async (req, res) => {
   try {
     const { id } = req.params;
 
-    await Reservation.findByIdAndDelete(id);
+    const deletedReservation = await Reservation.findByIdAndDelete(id);
+
+    if (!deletedReservation) {
+      return res.status(404).json({ message: "Reservation not found." });
+    }
 
     return res.status(200).json({ message: "Reservation deleted." });
   } catch (error) {
@@ -120,11 +121,23 @@ export const sendConfirmationEmail = async (req, res) => {
       return res.status(404).json({ message: "Reservation not found" });
     }
 
-    if (reservation.status !== "Pending") {
-      return res.status(400).json({ message: "Confirmation already sent" });
+    const allowedStatuses = ["Pending", "EmailSent"];
+    if (!allowedStatuses.includes(reservation.status)) {
+      return res.status(400).json({
+        message: `Cannot send confirmation while reservation is "${reservation.status}".`,
+      });
+    }
+
+    if (!reservation.email) {
+      return res
+        .status(400)
+        .json({ message: "Reservation has no email address." });
     }
 
     const token = crypto.randomBytes(32).toString("hex");
+
+    reservation.confirmationToken = token;
+    await reservation.save();
 
     const backendUrl = process.env.BACKEND_URL?.replace(/\/$/, "");
     const confirmUrl = `${backendUrl}/api/reservations/confirm/${token}`;
