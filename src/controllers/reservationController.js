@@ -198,11 +198,17 @@ export const sendConfirmationEmail = async (req, res) => {
       command: error.command,
       response: error.response,
       responseCode: error.responseCode,
+      stack: error.stack,
     });
 
     return res.status(500).json({
-      message: "Failed to send confirmation email.",
-      error: error.message,
+      message: error.message || "Failed to send confirmation email.",
+      error: {
+        code: error.code || null,
+        command: error.command || null,
+        response: error.response || null,
+        responseCode: error.responseCode || null,
+      },
     });
   }
 };
