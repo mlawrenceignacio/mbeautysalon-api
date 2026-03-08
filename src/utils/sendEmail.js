@@ -1,30 +1,47 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const emailUser = process.env.EMAIL_USER;
+const emailPass = process.env.EMAIL_PASS;
+
+if (!emailUser || !emailPass) {
+  console.error("Missing EMAIL_USER or EMAIL_PASS in environment variables.");
+}
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
+  auth: {
+    user: emailUser,
+    pass: emailPass,
+  },
+});
 
 export const sendEmail = async ({ to, subject, html }) => {
   try {
     if (!to) {
-      throw new Error("Recipient email is required");
+      throw new Error("Recipient email is required.");
     }
 
-    const { data, error } = await resend.emails.send({
-      from: process.env.EMAIL_FROM,
-      to: [to],
-      subject: subject,
-      html: html,
+    if (!emailUser || !emailPass) {
+      throw new Error(
+        "Email credentials are missing in environment variables.",
+      );
+    }
+
+    const info = await transporter.sendMail({
+      from: `"MBeautyQueen" <${emailUser}>`,
+      to,
+      subject,
+      html,
     });
 
-    if (error) {
-      console.error("Resend error:", error);
-      throw error;
-    }
-
-    console.log("Email sent successfully:", data);
-
-    return data;
-  } catch (err) {
-    console.error("sendEmail error:", err);
-    throw err;
+    return info;
+  } catch (error) {
+    console.error("sendEmail error details:", {
+      message: error.message,
+      code: error.code,
+    });
+    throw error;
   }
 };
