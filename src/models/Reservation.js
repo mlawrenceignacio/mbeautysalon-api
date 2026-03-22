@@ -43,7 +43,6 @@ const reservationSchema = new mongoose.Schema(
       type: String,
       enum: [
         "Pending",
-        "EmailSent",
         "UserConfirmed",
         "Confirmed",
         "Declined",

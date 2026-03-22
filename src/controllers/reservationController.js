@@ -119,17 +119,6 @@ export const cancelOwnReservation = async (req, res) => {
       });
     }
 
-    const createdAt = new Date(reservation.createdAt).getTime();
-    const now = Date.now();
-    const oneDayInMs = 24 * 60 * 60 * 1000;
-
-    if (now - createdAt < oneDayInMs) {
-      return res.status(400).json({
-        message:
-          "You can only cancel this reservation if it has not been processed within 1 day.",
-      });
-    }
-
     reservation.status = "Cancelled";
     await reservation.save();
 
@@ -177,7 +166,7 @@ export const confirmOwnReservation = async (req, res) => {
     }
 
     reservation.status = "UserConfirmed";
-    await Reservation.save();
+    await reservation.save();
 
     return res.status(200).json({
       message: "Reservation confirmed successfully.",
