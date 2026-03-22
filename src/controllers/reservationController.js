@@ -1,7 +1,5 @@
 import Reservation from "../models/Reservation.js";
 import crypto from "crypto";
-import { sendEmail } from "../utils/sendEmail.js";
-
 const formatService = (service) => {
   if (Array.isArray(service)) return service.join(", ");
   if (service == null) return "N/A";
@@ -18,7 +16,7 @@ const getBaseUrl = () => {
 
 export const getUserReservation = async (req, res) => {
   try {
-    const reservations = await Reservation.find({ userId: req.user._id });
+    const reservations = await Reservation.find({ email: req.user.email });
 
     return res.status(200).json({ reservations });
   } catch (error) {
@@ -85,13 +83,6 @@ export const editReservation = async (req, res) => {
       return res.status(404).json({ message: "Reservation not found." });
     }
 
-    if (
-      req.body.status === "Confirmed" &&
-      reservation.status !== "UserConfirmed"
-    ) {
-      return res.status(400).json({ message: "User has not confirmed yet." });
-    }
-
     const updatedReservation = await Reservation.findByIdAndUpdate(
       id,
       { $set: req.body },
@@ -104,6 +95,50 @@ export const editReservation = async (req, res) => {
     });
   } catch (error) {
     console.error("editReservation error:", error);
+    return res.status(500).json({ message: "Server Error" });
+  }
+};
+
+export const cancelOwnReservation = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const reservation = await Reservation.findById(id);
+
+    if (!reservation) {
+      return res.status(404).json({ message: "Reservation not found." });
+    }
+
+    if (reservation.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+
+    if (reservation.status !== "Pending") {
+      return res.status(400).json({
+        message: "Only pending reservations can be cancelled.",
+      });
+    }
+
+    const createdAt = new Date(reservation.createdAt).getTime();
+    const now = Date.now();
+    const oneDayInMs = 24 * 60 * 60 * 1000;
+
+    if (now - createdAt < oneDayInMs) {
+      return res.status(400).json({
+        message:
+          "You can only cancel this reservation if it has not been processed within 1 day.",
+      });
+    }
+
+    reservation.status = "Cancelled";
+    await reservation.save();
+
+    return res.status(200).json({
+      message: "Reservation cancelled successfully.",
+      reservation,
+    });
+  } catch (error) {
+    console.error("cancelOwnReservation error:", error);
     return res.status(500).json({ message: "Server Error" });
   }
 };
@@ -125,133 +160,32 @@ export const deleteReservation = async (req, res) => {
   }
 };
 
-export const sendConfirmationEmail = async (req, res) => {
+export const confirmOwnReservation = async (req, res) => {
   try {
-    const reservation = await Reservation.findById(req.params.id);
+    const { id } = req.params;
+
+    const reservation = await Reservation.findById(id);
 
     if (!reservation) {
       return res.status(404).json({ message: "Reservation not found." });
     }
 
-    if (!reservation.email) {
-      return res.status(400).json({ message: "Reservation email is missing." });
-    }
-
-    if (!["Pending", "EmailSent"].includes(reservation.status)) {
+    if (reservation.status !== "Pending") {
       return res.status(400).json({
-        message: `Cannot send confirmation for reservation with status "${reservation.status}".`,
+        message: "Only pending reservations can be confirmed by user.",
       });
-    }
-
-    const backendUrl = process.env.BACKEND_URL?.replace(/\/$/, "");
-    if (!backendUrl) {
-      return res.status(500).json({
-        message: "BACKEND_URL is not configured on the server.",
-      });
-    }
-
-    const token = crypto.randomBytes(32).toString("hex");
-
-    reservation.confirmationToken = token;
-    await reservation.save();
-
-    const confirmUrl = `${backendUrl}/api/reservations/confirm/${token}`;
-    const cancelUrl = `${backendUrl}/api/reservations/cancel/${token}`;
-
-    await sendEmail({
-      to: reservation.email,
-      subject: "Confirm Your Reservation",
-      html: `
-        <h2>Reservation Confirmation</h2>
-        <p><b>Name:</b> ${reservation.clientName}</p>
-        <p><b>Service:</b> ${reservation.service}</p>
-        <p><b>Date:</b> ${reservation.date}</p>
-        <p><b>Time:</b> ${reservation.time}</p>
-
-        <p>Please confirm your reservation by clicking below:</p>
-
-        <a
-          href="${confirmUrl}"
-          style="display:inline-block;padding:10px 15px;background:#790808;color:white;border-radius:5px;text-decoration:none;"
-        >
-          Confirm
-        </a>
-
-        <br /><br />
-
-        <a href="${cancelUrl}" style="color:red;">
-          Cancel Reservation
-        </a>
-      `,
-    });
-
-    reservation.status = "EmailSent";
-    await reservation.save();
-
-    return res.status(200).json({
-      message: "Confirmation email sent successfully.",
-    });
-  } catch (error) {
-    console.error("sendConfirmationEmail error:", {
-      message: error.message,
-      code: error.code,
-      command: error.command,
-      response: error.response,
-      responseCode: error.responseCode,
-      stack: error.stack,
-    });
-
-    return res.status(500).json({
-      message: error.message || "Failed to send confirmation email.",
-      error: {
-        code: error.code || null,
-        command: error.command || null,
-        response: error.response || null,
-        responseCode: error.responseCode || null,
-      },
-    });
-  }
-};
-
-export const confirmReservationFromEmail = async (req, res) => {
-  try {
-    const reservation = await Reservation.findOne({
-      confirmationToken: req.params.token,
-    });
-
-    if (!reservation) {
-      return res.status(400).send("Invalid or expired token.");
     }
 
     reservation.status = "UserConfirmed";
-    reservation.confirmationToken = undefined;
-    await reservation.save();
+    await Reservation.save();
 
-    return res.redirect(`${process.env.FRONTEND_WEB_URL}/confirmed`);
-  } catch (error) {
-    console.error("confirmReservationFromEmail error:", error);
-    return res.status(500).send("Server Error");
-  }
-};
-
-export const cancelReservationFromEmail = async (req, res) => {
-  try {
-    const reservation = await Reservation.findOne({
-      confirmationToken: req.params.token,
+    return res.status(200).json({
+      message: "Reservation confirmed successfully.",
+      reservation,
     });
-
-    if (!reservation) {
-      return res.status(404).send("Invalid or expired token.");
-    }
-
-    reservation.status = "Cancelled";
-    reservation.confirmationToken = undefined;
-    await reservation.save();
-
-    return res.send("Reservation cancelled.");
   } catch (error) {
-    console.error("cancelReservationFromEmail error:", error);
-    return res.status(500).send("Server Error");
+    console.error("confirmOwnReservation error:", error);
+    return res.status(500).json({ message: "Server Error" });
   }
 };
 

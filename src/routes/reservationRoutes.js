@@ -5,15 +5,12 @@ import {
   addReservation,
   editReservation,
   deleteReservation,
+  cancelOwnReservation,
+  confirmOwnReservation,
 } from "../controllers/reservationController.js";
 import { protect, adminOnly } from "../middlewares/authMiddleware.js";
 import { validateReservationInput } from "../middlewares/validateInput.js";
-import {
-  confirmReservationFromEmail,
-  cancelReservationFromEmail,
-  sendConfirmationEmail,
-  updateReservationStatusWithReason,
-} from "../controllers/reservationController.js";
+import { updateReservationStatusWithReason } from "../controllers/reservationController.js";
 
 const router = express.Router();
 
@@ -25,25 +22,18 @@ router.put(
   protect,
   adminOnly,
   validateReservationInput,
-  editReservation
+  editReservation,
 );
 router.patch("/:id/status", protect, adminOnly, editReservation);
 router.patch(
   "/:id/status-with-reason",
   protect,
   adminOnly,
-  updateReservationStatusWithReason
+  updateReservationStatusWithReason,
 );
+router.patch("/:id/status-own-reservation", protect, cancelOwnReservation);
+router.patch("/:id/confirm-own-reservation", protect, confirmOwnReservation);
 
 router.delete("/:id", protect, adminOnly, deleteReservation);
-
-router.post(
-  "/:id/send-confirmation",
-  protect,
-  adminOnly,
-  sendConfirmationEmail
-);
-router.get("/confirm/:token", confirmReservationFromEmail);
-router.get("/cancel/:token", cancelReservationFromEmail);
 
 export default router;

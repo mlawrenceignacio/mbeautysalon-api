@@ -10,7 +10,7 @@ export const getUserChats = async (req, res) => {
       return res.status(400).json({ message: "Invalid userId" });
     }
 
-    const chats = await Chat.find({ userId }).sort({ createdAt: 1 });
+    const chats = await Chat.find({ userId }).sort({ createdAt: 1, _id: 1 });
     res.status(200).json({ chats });
   } catch (error) {
     console.error(error);
@@ -97,22 +97,19 @@ export const sendFaqAutoReply = async (req, res) => {
     const faq = await Faq.findById(faqId);
     if (!faq) return res.status(404).json({ message: "FAQ not found." });
 
-    const created = await Chat.insertMany([
-      {
-        sender: "user",
-        userId,
-        message: faq.question,
-        seenByAdmin: false,
-      },
-      {
-        sender: "admin",
-        userId,
-        message: faq.answer,
-        seenByAdmin: true,
-      },
-    ]);
+    const questionChat = await Chat.create({
+      sender: "user",
+      userId,
+      message: faq.question,
+      seenByAdmin: false,
+    });
 
-    const [questionChat, answerChat] = created;
+    const answerChat = await Chat.create({
+      sender: "admin",
+      userId,
+      message: faq.answer,
+      seenByAdmin: true,
+    });
 
     if (req.io) {
       req.io.to("admins").emit("newMessage", questionChat);

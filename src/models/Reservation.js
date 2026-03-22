@@ -52,15 +52,12 @@ const reservationSchema = new mongoose.Schema(
       ],
       default: "Pending",
     },
-    confirmationToken: {
-      type: String,
-    },
     decisionReason: {
       type: String,
       trim: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Reservation = mongoose.model("Reservation", reservationSchema);
