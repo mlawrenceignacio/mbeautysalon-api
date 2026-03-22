@@ -3,6 +3,10 @@ import User from "../models/User.js";
 
 const feedbackSchema = new mongoose.Schema(
   {
+    email: {
+      type: String,
+      ref: User,
+    },
     username: {
       type: String,
       ref: User,
@@ -16,7 +20,7 @@ const feedbackSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Feedback = mongoose.model("Feedback", feedbackSchema);

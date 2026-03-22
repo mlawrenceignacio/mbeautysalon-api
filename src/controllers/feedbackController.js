@@ -23,6 +23,7 @@ export const addFeedback = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User not found." });
 
     const newFeedback = await Feedback.create({
+      email: user.email,
       username: user.username,
       message: message ? message : "",
       star,
