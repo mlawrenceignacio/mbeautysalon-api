@@ -1,22 +1,16 @@
 import Reservation from "../models/Reservation.js";
-import crypto from "crypto";
+import User from "../models/User.js";
+import { sendReservationStatusEmail } from "../utils/emailService.js";
+
 const formatService = (service) => {
   if (Array.isArray(service)) return service.join(", ");
   if (service == null) return "N/A";
   return String(service);
 };
 
-const getBaseUrl = () => {
-  const raw = process.env.BACKEND_URL;
-  if (!raw) {
-    throw new Error("BACKEND_URL is not configured.");
-  }
-  return raw.replace(/\/$/, "");
-};
-
 export const getUserReservation = async (req, res) => {
   try {
-    const reservations = await Reservation.find({ email: req.user.email });
+    const reservations = await Reservation.find({ email: req.user.email }).populate("serviceId");
 
     return res.status(200).json({ reservations });
   } catch (error) {
@@ -27,7 +21,7 @@ export const getUserReservation = async (req, res) => {
 
 export const getReservations = async (req, res) => {
   try {
-    const reservations = await Reservation.find();
+    const reservations = await Reservation.find().populate("serviceId");
 
     return res.status(200).json({ reservations });
   } catch (error) {
@@ -38,6 +32,17 @@ export const getReservations = async (req, res) => {
 
 export const addReservation = async (req, res) => {
   try {
+    // Block unverified users from booking
+    const user = await User.findById(req.user._id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+    if (!user.isEmailVerified) {
+      return res.status(403).json({
+        message: "Please verify your email before booking a reservation.",
+      });
+    }
+
     const {
       date,
       time,
@@ -46,7 +51,7 @@ export const addReservation = async (req, res) => {
       phone,
       address,
       note,
-      service,
+      serviceId,
       status,
     } = req.body;
 
@@ -59,7 +64,7 @@ export const addReservation = async (req, res) => {
       phone,
       email,
       note: note?.trim() ? note.trim() : "None",
-      service,
+      serviceId,
       status: status || "Pending",
     });
 
@@ -205,30 +210,28 @@ export const updateReservationStatusWithReason = async (req, res) => {
 
     reservation.status = status;
     reservation.decisionReason = reason?.trim() || undefined;
+    reservation.handledByAdminId = req.user._id;
 
     await reservation.save();
 
+    // Populate service for email
+    await reservation.populate("serviceId");
+
+    // Send notification email (best-effort — don't fail the request if email fails)
     if (requiresReason.includes(status)) {
-      await sendEmail({
-        to: reservation.email,
-        subject: `Your reservation has been ${status}`,
-        html: `
-          <h2>Reservation ${status}</h2>
-          <p>Hello ${reservation.clientName},</p>
-          <p>
-            Your reservation for <b>${formatService(reservation.service)}</b> on
-            <b>${reservation.date}</b> at <b>${reservation.time}</b> has been
-            <b>${status}</b>.
-          </p>
-
-          <p><b>Reason:</b></p>
-          <p style="background:#f4f4f4;padding:10px;border-radius:5px;">
-            ${reason}
-          </p>
-
-          <p>If you have questions, feel free to contact us.</p>
-        `,
-      });
+      try {
+        await sendReservationStatusEmail({
+          to: reservation.email,
+          clientName: reservation.clientName,
+          service: reservation.serviceId?.service || "N/A",
+          date: reservation.date,
+          time: reservation.time,
+          status,
+          reason: reason?.trim(),
+        });
+      } catch (emailErr) {
+        console.error("Failed to send reservation status email:", emailErr.message);
+      }
     }
 
     return res.status(200).json({

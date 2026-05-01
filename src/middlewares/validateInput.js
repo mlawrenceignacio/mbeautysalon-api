@@ -4,7 +4,7 @@ export const validateAuthInput = (req, res, next) => {
   const schema = Joi.object({
     email: Joi.string().email({ tlds: false }).required().messages({
       "string.empty": "Email is required.",
-      "string.email": "Please enter a valid email address",
+      "string.email": "Please enter a valid email address.",
     }),
     password: Joi.string().min(8).required().messages({
       "string.empty": "Password is required.",
@@ -63,17 +63,26 @@ export const validateReservationInput = (req, res, next) => {
     time: Joi.string().required().messages({
       "string.empty": "Time field is required.",
     }),
-    clientName: Joi.string().required().messages({
-      "string.empty": "Client name is required.",
-    }),
+    clientName: Joi.string()
+      .pattern(/^[A-Za-zÀ-ÿ\s.\-']+$/)
+      .required()
+      .messages({
+        "string.empty": "Client name is required.",
+        "string.pattern.base":
+          "Full name must contain only letters, spaces, hyphens, or periods.",
+      }),
     email: Joi.string().email({ tlds: false }).required().messages({
       "string.empty": "Email field is required.",
       "string.email": "Please enter a valid email address.",
     }),
-    phone: Joi.string().min(11).required().messages({
-      "string.empty": "Phone field is required.",
-      "string.min": "Please enter a valid phone number.",
-    }),
+    phone: Joi.string()
+      .pattern(/^09\d{9}$/)
+      .required()
+      .messages({
+        "string.empty": "Phone field is required.",
+        "string.pattern.base":
+          "Phone number must start with 09 and contain exactly 11 digits.",
+      }),
     address: Joi.string().required().messages({
       "string.empty": "Address field is required.",
     }),
@@ -93,10 +102,6 @@ export const validateReservationInput = (req, res, next) => {
 
 export const validateFeedbackInput = (req, res, next) => {
   const schema = Joi.object({
-    email: Joi.string().email().required().messages({
-      "string.empty": "Email is required.",
-      "string.email": "Please enter a valid email address.",
-    }),
     message: Joi.string().allow(""),
     star: Joi.number().valid(1, 2, 3, 4, 5).required().messages({
       "any.only": "Star must be 1, 2, 3, 4, or 5.",
@@ -116,14 +121,18 @@ export const validateFeedbackInput = (req, res, next) => {
 
 export const validateUserInput = (req, res, next) => {
   const schema = Joi.object({
-    username: Joi.string().min(8).required().messages({
-      "string.empty": "Username required.",
-      "string.min": "Please enter a minimum of 8 characters.",
-    }),
-    email: Joi.string().email().required().messages({
-      "string.empty": "Email is required.",
-      "string.min": "Please enter a minimum of 8 characters",
-    }),
+    username: Joi.string()
+      .pattern(/^[A-Za-z0-9_]+$/)
+      .min(3)
+      .max(20)
+      .required()
+      .messages({
+        "string.empty": "Username is required.",
+        "string.min": "Username must be at least 3 characters.",
+        "string.max": "Username must be at most 20 characters.",
+        "string.pattern.base":
+          "Username can only contain letters, numbers, and underscores.",
+      }),
   });
 
   const { error } = schema.validate(req.body);
@@ -181,13 +190,6 @@ export const validateAdminActivityInput = (req, res, next) => {
   const schema = Joi.object({
     activityName: Joi.string().required().messages({
       "string.empty": "Activity name required.",
-    }),
-    adminUsername: Joi.string().required().messages({
-      "string.empty": "Admin Username required.",
-    }),
-    adminEmail: Joi.string().email().required().messages({
-      "string.empty": "Admin Email required.",
-      "string.email": "Enter a valid email address.",
     }),
   });
 

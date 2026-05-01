@@ -37,6 +37,7 @@ export const addPromotion = async (req, res) => {
       category,
       expiration,
       status: status ? status : "Active",
+      addedByAdminId: req.user._id,
     });
 
     return res.status(201).json({
@@ -61,7 +62,12 @@ export const updatePromotion = async (req, res) => {
 
     const updatedPromotion = await Promotion.findByIdAndUpdate(
       id,
-      { $set: req.body },
+      { 
+        $set: { 
+          ...req.body, 
+          addedByAdminId: req.user._id 
+        } 
+      },
       { new: true, runValidators: true }
     );
 

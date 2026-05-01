@@ -24,6 +24,10 @@ const promotionSchema = new mongoose.Schema(
       enum: ["Expired", "Active"],
       default: "Active",
     },
+    addedByAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );

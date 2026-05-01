@@ -26,6 +26,7 @@ export const addFaq = async (req, res) => {
     const newFaq = await Faq.create({
       question,
       answer,
+      addedByAdminId: req.user._id,
     });
 
     return res.status(201).json({
@@ -63,6 +64,7 @@ export const editFaq = async (req, res) => {
       {
         question,
         answer,
+        addedByAdminId: req.user._id,
       },
       { new: true }
     );

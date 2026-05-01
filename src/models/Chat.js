@@ -20,6 +20,14 @@ const chatSchema = new mongoose.Schema(
         return this.sender === "admin";
       },
     },
+    conversationId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Conversation",
+    },
+    adminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
 
   { timestamps: true },

@@ -31,6 +31,16 @@ const userSchema = new mongoose.Schema(
       enum: ["google", "email"],
       default: "email",
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerificationToken: {
+      type: String,
+    },
+    emailVerificationExpires: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

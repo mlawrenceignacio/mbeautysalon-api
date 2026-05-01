@@ -16,6 +16,6 @@ router.get("/search/:userId", protect, adminOnly, getThisUser);
 
 router.get("/web-users", protect, adminOnly, getUsers);
 router.get("/admins", protect, adminOnly, getAdmins);
-router.patch("/:id", protect, editUser);
+router.patch("/:id", protect, validateUserInput, editUser);
 
 export default router;

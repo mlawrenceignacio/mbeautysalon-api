@@ -16,6 +16,7 @@ import contactRoutes from "./routes/contactInfoRoutes.js";
 import promotionRoutes from "./routes/promotionRoutes.js";
 import adminActivityRoutes from "./routes/adminActivityRoutes.js";
 import chatRoutes from "./routes/chatRoutes.js";
+import verificationRoutes from "./routes/verificationRoutes.js";
 import { startPromotionCron } from "./cron/promotionCron.js";
 import { createServer } from "http";
 import { Server } from "socket.io";
@@ -90,6 +91,7 @@ app.use((req, res, next) => {
 app.get("/health", (req, res) => res.status(200).send("ok"));
 
 app.use("/api/auth", authRoutes);
+app.use("/api/auth", verificationRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/reservations", reservationRoutes);
 app.use("/api/faq", faqRoutes);
@@ -100,7 +102,7 @@ app.use("/api/promotions", promotionRoutes);
 app.use("/api/admin-activity", adminActivityRoutes);
 app.use("/api/chat", chatRoutes);
 
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 5000;
 
 connectDB()
   .then(() => {

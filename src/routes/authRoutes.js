@@ -16,16 +16,29 @@ router.post("/logout", logout);
 
 router.get("/google", oauthLimiter, (req, res, next) => {
   const platform = req.query.platform;
+  const callbackURL =
+    platform === "mobile"
+      ? process.env.GOOGLE_CALLBACK_URL
+      : "http://localhost:5000/api/auth/google/callback";
+
   passport.authenticate("google", {
     scope: ["profile", "email"],
     state: platform,
     prompt: "select_account",
+    callbackURL,
   })(req, res, next);
 });
 
 router.get(
   "/google/callback",
-  passport.authenticate("google", { session: false }),
+  (req, res, next) => {
+    const platform = req.query.state;
+    const callbackURL =
+      platform === "mobile"
+        ? process.env.GOOGLE_CALLBACK_URL
+        : "http://localhost:5000/api/auth/google/callback";
+    passport.authenticate("google", { session: false, callbackURL })(req, res, next);
+  },
   googleCallback,
 );
 

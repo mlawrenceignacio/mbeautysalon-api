@@ -4,13 +4,25 @@ import User from "../models/User.js";
 export const getAllAdminActivities = async (req, res) => {
   try {
     const activities = await AdminActivity.find()
+      .populate("adminId", "username email")
       .sort({ createdAt: -1 })
       .limit(40);
 
     if (!activities)
       return res.status(404).json({ message: "No admin activity found." });
 
-    return res.status(200).json({ activities });
+    // Map to keep backward-compatible response shape
+    const mapped = activities.map((a) => ({
+      _id: a._id,
+      adminId: a.adminId?._id || null,
+      adminUsername: a.adminId?.username || "Unknown",
+      adminEmail: a.adminId?.email || "Unknown",
+      activityName: a.activityName,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+    }));
+
+    return res.status(200).json({ activities: mapped });
   } catch (error) {
     console.error(error.message);
     return res.status(500).json({ message: "Server Error" });
@@ -20,18 +32,27 @@ export const getAllAdminActivities = async (req, res) => {
 export const getAdminActivities = async (req, res) => {
   try {
     const { id } = req.params;
-    const found = await AdminActivity.find({ adminId: id })
-      .sort({
-        createdAt: -1,
-      })
+    const activities = await AdminActivity.find({ adminId: id })
+      .populate("adminId", "username email")
+      .sort({ createdAt: -1 })
       .limit(40);
 
-    if (!found)
+    if (!activities)
       return res
         .status(404)
         .json({ message: "No activity found from this admin." });
 
-    return res.status(200).json({ found });
+    const mapped = activities.map((a) => ({
+      _id: a._id,
+      adminId: a.adminId?._id || null,
+      adminUsername: a.adminId?.username || "Unknown",
+      adminEmail: a.adminId?.email || "Unknown",
+      activityName: a.activityName,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+    }));
+
+    return res.status(200).json({ found: mapped });
   } catch (error) {
     console.error(error.message);
     return res.status(500).json({ message: "Server Error" });
@@ -40,24 +61,33 @@ export const getAdminActivities = async (req, res) => {
 
 export const addAdminActivity = async (req, res) => {
   try {
-    const { adminUsername, activityName, adminEmail } = req.body;
+    const { activityName } = req.body;
     const { id } = req.params;
 
-    if (!adminUsername || !activityName || !adminEmail) {
-      return res.status(400).json({ message: "Bad Request" });
+    if (!activityName) {
+      return res.status(400).json({ message: "Activity name is required." });
     }
 
     const admin = await User.findById(id);
     if (!admin) return res.status(404).json({ message: "Admin not found." });
 
     const newAdminActivity = await AdminActivity.create({
-      adminUsername,
       adminId: id,
       activityName,
-      adminEmail,
     });
 
-    return res.status(201).json({ newAdminActivity });
+    // Return with populated data for consistency
+    return res.status(201).json({
+      newAdminActivity: {
+        _id: newAdminActivity._id,
+        adminId: admin._id,
+        adminUsername: admin.username,
+        adminEmail: admin.email,
+        activityName: newAdminActivity.activityName,
+        createdAt: newAdminActivity.createdAt,
+        updatedAt: newAdminActivity.updatedAt,
+      },
+    });
   } catch (error) {
     console.error(error.message);
     return res.status(500).json({ message: "Server Error" });

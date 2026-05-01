@@ -10,6 +10,10 @@ const serviceSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    addedByAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
   },
   { timestamps: true }
 );

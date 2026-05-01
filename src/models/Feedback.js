@@ -1,15 +1,11 @@
 import mongoose from "mongoose";
-import User from "../models/User.js";
 
 const feedbackSchema = new mongoose.Schema(
   {
-    email: {
-      type: String,
-      ref: User,
-    },
-    username: {
-      type: String,
-      ref: User,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
     },
     message: {
       type: String,
@@ -18,6 +14,8 @@ const feedbackSchema = new mongoose.Schema(
     star: {
       type: Number,
       required: true,
+      min: 1,
+      max: 5,
     },
   },
   { timestamps: true },

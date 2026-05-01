@@ -33,13 +33,26 @@ passport.use(
               `Client${Math.floor(Math.random() * 1000)}`,
             provider: "google",
             role,
+            isEmailVerified: true, // Google-authenticated users are auto-verified
           });
         } else {
           const platform = req.query.state;
           const newRole = platform === "mobile" ? "admin" : "user";
 
+          let needsSave = false;
+
           if (newRole !== user.role) {
             user.role = newRole;
+            needsSave = true;
+          }
+
+          // Auto-verify Google users who weren't verified before
+          if (!user.isEmailVerified) {
+            user.isEmailVerified = true;
+            needsSave = true;
+          }
+
+          if (needsSave) {
             await user.save();
           }
         }

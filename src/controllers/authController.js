@@ -35,9 +35,13 @@ export const signUp = async (req, res) => {
 
     res.status(201).json({
       message: "Registered successfully",
+      token,
       user: {
+        _id: newUser._id,
         email: newUser.email,
+        username: newUser.username,
         role: newUser.role,
+        isEmailVerified: newUser.isEmailVerified,
       },
     });
   } catch (error) {
@@ -76,9 +80,13 @@ export const login = async (req, res) => {
 
     res.status(200).json({
       message: "Login successful",
+      token,
       user: {
+        _id: user._id,
         email: user.email,
+        username: user.username,
         role: user.role,
+        isEmailVerified: user.isEmailVerified,
       },
     });
   } catch (error) {

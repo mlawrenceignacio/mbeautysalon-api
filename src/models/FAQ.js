@@ -9,7 +9,11 @@ const faqSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-});
+  addedByAdminId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+  },
+}, { timestamps: true });
 
 const Faq = mongoose.model("Faq", faqSchema);
 export default Faq;

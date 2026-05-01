@@ -50,6 +50,7 @@ export const addContactInfo = async (req, res) => {
     const newContact = await ContactInfo.create({
       contactName: name,
       value: val,
+      addedByAdminId: req.user._id,
     });
 
     return res

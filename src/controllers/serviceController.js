@@ -21,6 +21,7 @@ export const addService = async (req, res) => {
     const newService = await Service.create({
       category,
       service,
+      addedByAdminId: req.user._id,
     });
 
     return res.status(201).json({
@@ -48,6 +49,7 @@ export const editService = async (req, res) => {
     const newService = await Service.findByIdAndUpdate(id, {
       category,
       service,
+      addedByAdminId: req.user._id,
     });
 
     return res.status(200).json({

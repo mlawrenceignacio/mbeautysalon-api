@@ -35,9 +35,14 @@ const reservationSchema = new mongoose.Schema(
       type: String,
       default: "None",
     },
-    service: {
-      type: String,
+    serviceId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Service",
       required: true,
+    },
+    handledByAdminId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     status: {
       type: String,
