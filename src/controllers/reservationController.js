@@ -52,8 +52,26 @@ export const addReservation = async (req, res) => {
       address,
       note,
       serviceId,
+      service, // Legacy fallback
       status,
     } = req.body;
+
+    let finalServiceId = serviceId;
+
+    // Fallback: If serviceId is missing but service string is provided (legacy mobile app)
+    if (!finalServiceId && service) {
+      const ServiceModel = (await import("../models/Service.js")).default;
+      const matchedService = await ServiceModel.findOne({
+        service: { $regex: new RegExp(`^${service.split(",")[0].trim()}$`, "i") },
+      });
+      if (matchedService) {
+        finalServiceId = matchedService._id;
+      }
+    }
+
+    if (!finalServiceId) {
+      return res.status(400).json({ message: "Valid Service ID is required." });
+    }
 
     const newReservation = await Reservation.create({
       userId: req.user._id,
@@ -64,7 +82,7 @@ export const addReservation = async (req, res) => {
       phone,
       email,
       note: note?.trim() ? note.trim() : "None",
-      serviceId,
+      serviceId: finalServiceId,
       status: status || "Pending",
     });
 
@@ -88,9 +106,13 @@ export const editReservation = async (req, res) => {
       return res.status(404).json({ message: "Reservation not found." });
     }
 
+    // Sanitize update: ensure 'service' string is not accidentally saved
+    const updateData = { ...req.body };
+    delete updateData.service; 
+
     const updatedReservation = await Reservation.findByIdAndUpdate(
       id,
-      { $set: req.body },
+      { $set: updateData },
       { new: true, runValidators: true },
     );
 

@@ -87,9 +87,10 @@ export const validateReservationInput = (req, res, next) => {
       "string.empty": "Address field is required.",
     }),
     note: Joi.string().allow(""),
-    service: Joi.string().required().messages({
-      "string.empty": "Service field is required.",
+    serviceId: Joi.string().required().messages({
+      "string.empty": "Service ID is required.",
     }),
+    service: Joi.string().optional(),
     status: Joi.string().allow(""),
   });
 
