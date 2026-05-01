@@ -86,6 +86,8 @@ export const addReservation = async (req, res) => {
       status: status || "Pending",
     });
 
+    await newReservation.populate("serviceId");
+
     return res.status(201).json({
       message: "Reservation added!",
       newReservation,
